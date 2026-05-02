@@ -1,5 +1,11 @@
 import { motion } from "framer-motion";
-import { Mail, Linkedin, Github, Send, MapPin, ArrowUpRight } from "lucide-react";
+import { Mail, Linkedin, Github, Send, MapPin, ArrowUpRight, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
+import emailjs from "@emailjs/browser";
+
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 const contactLinks = [
   {
@@ -7,8 +13,6 @@ const contactLinks = [
     label: "Email",
     href: "mailto:lokhandeas999@gmail.com",
     value: "lokhandeas999@gmail.com",
-    gradient: "from-violet-500 to-purple-600",
-    glow: "shadow-violet-500/25",
     bg: "from-violet-500/8 to-purple-500/5",
     border: "border-violet-200/60",
     iconBg: "bg-violet-500/10",
@@ -19,8 +23,6 @@ const contactLinks = [
     label: "LinkedIn",
     href: "https://www.linkedin.com/in/atharv-lokhande-714931289/",
     value: "linkedin.com/in/atharv-lokhande-714931289",
-    gradient: "from-sky-500 to-cyan-600",
-    glow: "shadow-sky-500/25",
     bg: "from-sky-500/8 to-cyan-500/5",
     border: "border-sky-200/60",
     iconBg: "bg-sky-500/10",
@@ -31,8 +33,6 @@ const contactLinks = [
     label: "GitHub",
     href: "https://github.com/Atharvl95",
     value: "github.com/Atharvl95",
-    gradient: "from-slate-600 to-slate-800",
-    glow: "shadow-slate-500/20",
     bg: "from-slate-500/8 to-slate-600/5",
     border: "border-slate-200/60",
     iconBg: "bg-slate-500/10",
@@ -43,8 +43,6 @@ const contactLinks = [
     label: "Location",
     href: "#",
     value: "Pune, Maharashtra, India",
-    gradient: "from-pink-500 to-rose-600",
-    glow: "shadow-pink-500/25",
     bg: "from-pink-500/8 to-rose-500/5",
     border: "border-pink-200/60",
     iconBg: "bg-pink-500/10",
@@ -52,7 +50,37 @@ const contactLinks = [
   },
 ];
 
+type FormStatus = "idle" | "loading" | "success" | "error";
+
 const ContactSection = () => {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [status, setStatus] = useState<FormStatus>("idle");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!formRef.current) return;
+
+    setStatus("loading");
+
+    try {
+      await emailjs.sendForm(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        formRef.current,
+        EMAILJS_PUBLIC_KEY
+      );
+      setStatus("success");
+      formRef.current.reset();
+      setTimeout(() => setStatus("idle"), 5000);
+    } catch (err) {
+      console.error("EmailJS error:", err);
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 5000);
+    }
+  };
+
+  const isLoading = status === "loading";
+
   return (
     <section
       id="contact"
@@ -94,6 +122,10 @@ const ContactSection = () => {
           outline: none;
         }
         .glass-input::placeholder { color: #a0aec0; }
+        .glass-input:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
         .gradient-text {
           background: linear-gradient(135deg, #7c5cfa 0%, #5bb8ff 50%, #ff6b9d 100%);
           -webkit-background-clip: text;
@@ -110,17 +142,24 @@ const ContactSection = () => {
           box-shadow: 0 6px 24px rgba(124, 92, 250, 0.4);
           transition: all 0.3s ease;
         }
-        .send-btn:hover {
+        .send-btn:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 12px 32px rgba(124, 92, 250, 0.55);
         }
-        .send-btn:active { transform: translateY(0); }
-        .contact-link-card {
-          transition: all 0.3s ease;
-        }
+        .send-btn:active:not(:disabled) { transform: translateY(0); }
+        .send-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .contact-link-card { transition: all 0.3s ease; }
         .contact-link-card:hover {
           transform: translateY(-4px);
           box-shadow: 0 16px 40px rgba(100, 70, 200, 0.16), 0 1px 0 rgba(255,255,255,0.9) inset;
+        }
+        .status-success {
+          background: rgba(16, 185, 129, 0.1);
+          border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .status-error {
+          background: rgba(239, 68, 68, 0.1);
+          border: 1px solid rgba(239, 68, 68, 0.3);
         }
       `}</style>
 
@@ -129,12 +168,11 @@ const ContactSection = () => {
         <div className="absolute right-[-60px] top-0 h-[450px] w-[450px] rounded-full bg-violet-400/12 blur-[110px]" />
         <div className="absolute left-[-40px] bottom-0 h-[350px] w-[350px] rounded-full bg-sky-400/12 blur-[100px]" />
         <div className="absolute left-1/2 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-pink-400/8 blur-[90px]" />
-        {/* Floating shapes */}
         {[
-          { size: 12, color: "#7c5cfa", left: "8%", top: "15%", delay: 0 },
-          { size: 8, color: "#5bb8ff", left: "85%", top: "20%", delay: 1.5 },
+          { size: 12, color: "#7c5cfa", left: "8%",  top: "15%", delay: 0   },
+          { size: 8,  color: "#5bb8ff", left: "85%", top: "20%", delay: 1.5 },
           { size: 10, color: "#ff6b9d", left: "75%", top: "70%", delay: 0.8 },
-          { size: 6, color: "#a78bfa", left: "15%", top: "75%", delay: 2 },
+          { size: 6,  color: "#a78bfa", left: "15%", top: "75%", delay: 2   },
         ].map((p, i) => (
           <div
             key={i}
@@ -178,14 +216,15 @@ const ContactSection = () => {
         </motion.div>
 
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          {/* Contact Form */}
+          {/* ── Contact Form ── */}
           <motion.form
+            ref={formRef}
+            onSubmit={handleSubmit}
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
             className="glass-premium rounded-3xl p-8"
-            action="#"
           >
             <div className="shimmer-badge mb-1 inline-flex items-center gap-2 rounded-full border border-violet-300/30 px-3 py-1.5">
               <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-violet-500">
@@ -193,67 +232,120 @@ const ContactSection = () => {
               </span>
             </div>
             <h3 className="mt-3 mb-7 text-2xl font-bold text-slate-900">
-              Start a{" "}
-              <span className="gradient-text">conversation</span>
+              Start a <span className="gradient-text">conversation</span>
             </h3>
 
             <div className="grid gap-5">
               <div className="grid gap-5 sm:grid-cols-2">
+                {/* matches {{name}} in EmailJS template */}
                 <label className="space-y-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Your Name
                   </span>
                   <input
                     type="text"
+                    name="name"
                     placeholder="John Doe"
+                    required
+                    disabled={isLoading}
                     className="glass-input w-full rounded-2xl px-4 py-3.5 text-sm text-slate-900"
                   />
                 </label>
+
+                {/* matches {{email}} (Reply To) in EmailJS template */}
                 <label className="space-y-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Email Address
                   </span>
                   <input
                     type="email"
+                    name="email"
                     placeholder="you@example.com"
+                    required
+                    disabled={isLoading}
                     className="glass-input w-full rounded-2xl px-4 py-3.5 text-sm text-slate-900"
                   />
                 </label>
               </div>
 
+              {/* matches {{title}} in Subject: "Contact Us: {{title}}" */}
               <label className="space-y-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Subject
                 </span>
                 <input
                   type="text"
+                  name="title"
                   placeholder="Project collaboration, job offer..."
+                  required
+                  disabled={isLoading}
                   className="glass-input w-full rounded-2xl px-4 py-3.5 text-sm text-slate-900"
                 />
               </label>
 
+              {/* matches {{message}} in EmailJS template */}
               <label className="space-y-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Message
                 </span>
                 <textarea
                   rows={6}
+                  name="message"
                   placeholder="Tell me about your project or opportunity..."
+                  required
+                  disabled={isLoading}
                   className="glass-input w-full resize-none rounded-2xl px-4 py-3.5 text-sm text-slate-900"
                 />
               </label>
 
+              {/* Status feedback */}
+              {status === "success" && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="status-success flex items-center gap-3 rounded-2xl px-4 py-3.5"
+                >
+                  <CheckCircle className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+                  <p className="text-sm font-medium text-emerald-700">
+                    Message sent! I'll get back to you soon.
+                  </p>
+                </motion.div>
+              )}
+
+              {status === "error" && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="status-error flex items-center gap-3 rounded-2xl px-4 py-3.5"
+                >
+                  <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-600" />
+                  <p className="text-sm font-medium text-red-700">
+                    Something went wrong. Please try again or email me directly.
+                  </p>
+                </motion.div>
+              )}
+
               <button
                 type="submit"
+                disabled={isLoading}
                 className="send-btn inline-flex items-center justify-center gap-2.5 rounded-2xl px-7 py-4 text-sm font-semibold text-white"
               >
-                <Send className="h-4 w-4" />
-                Send Message
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Sending…
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Send Message
+                  </>
+                )}
               </button>
             </div>
           </motion.form>
 
-          {/* Right column */}
+          {/* ── Right column ── */}
           <div className="flex flex-col gap-5">
             {/* Info card */}
             <motion.div
@@ -277,7 +369,6 @@ const ContactSection = () => {
                 collaborations. Currently based in Pune — available for remote & on-site.
               </p>
 
-              {/* Availability badge */}
               <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-200/60 bg-emerald-500/10 px-4 py-2">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -303,9 +394,7 @@ const ContactSection = () => {
                   transition={{ duration: 0.5, delay: 0.1 + i * 0.07 }}
                   className={`contact-link-card glass-premium flex items-center gap-4 rounded-2xl bg-gradient-to-r p-4 ${link.bg} ${link.border}`}
                 >
-                  <div
-                    className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${link.iconBg}`}
-                  >
+                  <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${link.iconBg}`}>
                     <link.icon className={`h-5 w-5 ${link.iconColor}`} />
                   </div>
                   <div className="flex-1 min-w-0">
