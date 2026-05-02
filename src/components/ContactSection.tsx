@@ -3,9 +3,9 @@ import { Mail, Linkedin, Github, Send, MapPin, ArrowUpRight, CheckCircle, AlertC
 import { useRef, useState } from "react";
 import emailjs from "@emailjs/browser";
 
-const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+const EMAILJS_SERVICE_ID = "service_cj3ogyn";
+const EMAILJS_TEMPLATE_ID = "template_pphfesq";
+const EMAILJS_PUBLIC_KEY = "HYdW_tuNulXaqXF1O";
 
 const contactLinks = [
   {
